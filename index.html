@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Akinator Clone</title>
+  <style>
+    /* Soft blue gradient background */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #a3c4f3, #699ce8);
+      color: #222;
+      display: flex;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    /* Container to hold left text and main content */
+    .container {
+      display: flex;
+      max-width: 900px;
+      margin: auto;
+      background: rgba(255 255 255 / 0.85);
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      width: 100%;
+    }
+
+    /* Left side text block replacing genie image */
+    .genie-image {
+      flex: 0 0 250px;
+      background: linear-gradient(135deg, #3a69d8, #274aaf);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: white;
+      font-weight: 700;
+      font-size: 1.3rem;
+      text-align: center;
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+      user-select: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .genie-text {
+      line-height: 1.4;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* Main content area */
+    .main-content {
+      flex: 1;
+      padding: 40px 40px 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0 0 25px 0;
+      text-align: center;
+      font-weight: 700;
+      font-size: 2.6rem;
+      color: #34495e;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      user-select: none;
+    }
+
+    /* Question container with number tag */
+    #question-container {
+      position: relative;
+      font-size: 1.4rem;
+      font-weight: 600;
+      padding: 20px 25px 20px 80px;
+      background: #d6e5fc;
+      border-radius: 10px;
+      box-shadow: inset 0 0 8px #a9c9ff;
+      color: #1a2e59;
+      text-shadow: 0 1px 1px rgba(255 255 255 / 0.7);
+      margin-bottom: 25px;
+      min-height: 80px;
+      user-select: none;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* Question number tag */
+    #question-number-tag {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #3a69d8;
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 8px 14px;
+      border-radius: 25px;
+      box-shadow: 0 3px 8px rgba(58, 105, 216, 0.6);
+      user-select: none;
+    }
+
+    /* Reference container */
+    #reference-container {
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      user-select: text;
+      max-width: 600px;
+      width: 100%;
+    }
+    #reference-container a {
+      color: #3a69d8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    #reference-container a:hover {
+      text-decoration: underline;
+    }
+
+    /* Buttons container with vertical stack */
+    #buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 180px;
+      margin-bottom: 35px;
+      user-select: none;
+      align-self: center;
+      width: 100%;
+    }
+    button {
+      padding: 12px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: white;
+      background: #3a69d8;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(58, 105, 216, 0.5);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+      user-select: none;
+      min-width: 160px;
+      text-align: center;
+      width: 100%;
+    }
+    button:hover {
+      background: #274aaf;
+      box-shadow: 0 7px 20px rgba(39, 74, 175, 0.7);
+    }
+    button:active {
+      background: #1c3483;
+      box-shadow: 0 3px 10px rgba(28, 52, 131, 0.9);
+    }
+
+    /* Result text styling */
+    #result {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #2c662d;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      min-height: 50px;
+      margin-top: 15px;
+      user-select: none;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Candidates left styling */
+    #candidates-left {
+      font-style: italic;
+      color: #555;
+      margin-bottom: 20px;
+      margin-top: 10px;
+      user-select: none;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Center start button horizontally */
+    #start-btn {
+      max-width: 180px;
+      margin: 0 auto 30px auto;
+      display: block;
+      background: #274aaf;
+      color: white;
+      font-weight: 700;
+      border-radius: 35px;
+      padding: 14px 0;
+      box-shadow: 0 5px 15px rgba(39, 74, 175, 0.5);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+    }
+    #start-btn:hover {
+      background: #1c3483;
+      box-shadow: 0 7px 20px rgba(28, 52, 131, 0.7);
+    }
+
+    /* Responsive tweaks */
+    @media (max-width: 700px) {
+      .container {
+        flex-direction: column;
+        max-width: 95vw;
+        margin: 20px auto;
+      }
+      .genie-image {
+        flex: none;
+        width: 100%;
+        height: 120px;
+        padding: 15px 10px;
+        font-size: 1.1rem;
+        border-radius: 12px 12px 0 0;
+      }
+      .main-content {
+        padding: 25px 15px;
+        align-items: stretch;
+      }
+      #buttons {
+        max-width: 180px;
+        margin: 0 auto 35px auto;
+        flex-direction: column;
+        width: 100%;
+      }
+      button {
+        flex: none;
+        max-width: 180px;
+        font-size: 1.1rem;
+        border-radius: 25px;
+        width: 100%;
+      }
+      #question-container {
+        padding-left: 60px;
+        max-width: 100%;
+      }
+      #question-number-tag {
+        left: 10px;
+        padding: 6px 12px;
+        font-size: 0.85rem;
+      }
+      #reference-container, #candidates-left, #result {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="genie-image" aria-hidden="true" title="Left side title">
+      <div class="genie-text">AKINATOR CLONE<br />USING KNOWLEDGE GRAPH</div>
+    </div>
+    <div class="main-content">
+      <h1>Akinator Clone</h1>
+      <button id="start-btn">Start Game</button>
+
+      <div id="question-container" style="display:none;">
+        <span id="question-number-tag">Q1</span>
+      </div>
+      <div id="reference-container"></div>
+
+      <div id="buttons" style="display:none;">
+        <button id="yes-btn">Yes</button>
+        <button id="no-btn">No</button>
+      </div>
+
+      <div id="candidates-left"></div>
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById("start-btn");
+    const questionContainer = document.getElementById("question-container");
+    const referenceContainer = document.getElementById("reference-container");
+    const buttons = document.getElementById("buttons");
+    const yesBtn = document.getElementById("yes-btn");
+    const noBtn = document.getElementById("no-btn");
+    const result = document.getElementById("result");
+    const candidatesLeft = document.getElementById("candidates-left");
+    const questionNumberTag = document.getElementById("question-number-tag");
+
+    let currentQuestion = null;
+    let questionCount = 0;
+
+    async function startGame() {
+      questionCount = 0;
+      const res = await fetch("/start", { method: "POST" });
+      const data = await res.json();
+      result.textContent = "";
+      candidatesLeft.textContent = "";
+      questionContainer.style.display = "block";
+      buttons.style.display = "flex";
+      startBtn.style.display = "none";
+      loadQuestion();
+    }
+
+    async function loadQuestion() {
+      const res = await fetch("/question");
+      const data = await res.json();
+
+      if (data.guess) {
+        questionContainer.style.display = "none";
+        buttons.style.display = "none";
+        referenceContainer.innerHTML = "";
+        result.textContent = `I guess your character is: ${data.guess}`;
+        candidatesLeft.textContent = "";
+        startBtn.style.display = "block";
+        startBtn.textContent = "Play Again";
+        return;
+      }
+
+      if (data.message) {
+        questionContainer.style.display = "none";
+        buttons.style.display = "none";
+        referenceContainer.innerHTML = "";
+        result.textContent = data.message;
+        candidatesLeft.textContent = "";
+        startBtn.style.display = "block";
+        startBtn.textContent = "Play Again";
+        return;
+      }
+
+      currentQuestion = data;
+      questionCount++;
+
+      questionContainer.textContent = data.question;
+
+      // Insert the question number tag text
+      questionNumberTag.textContent = `Q${questionCount}`;
+      questionContainer.appendChild(questionNumberTag);
+
+      // Show reference link if available
+      referenceContainer.innerHTML = "";
+      if (data.reference_link) {
+        referenceContainer.innerHTML = `<a href="${data.reference_link}" target="_blank" rel="noopener noreferrer">Check reference for this trait</a>`;
+      }
+
+      candidatesLeft.textContent = `Candidates left: ${data.candidates_remaining}`;
+      result.textContent = "";
+    }
+
+    async function answerQuestion(answer) {
+      if (!currentQuestion) return;
+      yesBtn.disabled = true;
+      noBtn.disabled = true;
+
+      const payload = {
+        relation: currentQuestion.relation,
+        target_label: currentQuestion.target_label,
+        value: currentQuestion.value,
+        answer: answer
+      };
+      const res = await fetch("/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      yesBtn.disabled = false;
+      noBtn.disabled = false;
+
+      if (data.done) {
+        questionContainer.style.display = "none";
+        buttons.style.display = "none";
+        referenceContainer.innerHTML = "";
+        if (data.guess) {
+          result.textContent = `I guess your character is: ${data.guess}`;
+        } else {
+          result.textContent = "I couldn't guess your character.";
+        }
+        candidatesLeft.textContent = "";
+        startBtn.style.display = "block";
+        startBtn.textContent = "Play Again";
+      } else {
+        candidatesLeft.textContent = `Candidates left: ${data.candidates_remaining}`;
+        loadQuestion();
+      }
+    }
+
+    startBtn.addEventListener("click", startGame);
+    yesBtn.addEventListener("click", () => answerQuestion("yes"));
+    noBtn.addEventListener("click", () => answerQuestion("no"));
+  </script>
+</body>
+</html>
