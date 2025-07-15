@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Akinator Clone</title>
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
     /* Soft blue gradient background */
     body {
@@ -205,6 +206,17 @@
       box-shadow: 0 7px 20px rgba(28, 52, 131, 0.7);
     }
 
+    /* NEW: Styles for the graph visualization container */
+    #mynetwork {
+        width: 100%; /* Adjust size as needed, e.g., 600px */
+        height: 500px; /* Adjust size as needed */
+        border: 1px solid lightgray;
+        border-radius: 8px;
+        margin-top: 20px;
+        background: #f9f9f9;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
     /* Responsive tweaks */
     @media (max-width: 700px) {
       .container {
@@ -249,6 +261,10 @@
       #reference-container, #candidates-left, #result {
         max-width: 100%;
       }
+      /* NEW: Adjust graph size for smaller screens */
+      #mynetwork {
+        height: 300px; /* Make graph shorter on mobile */
+      }
     }
   </style>
 </head>
@@ -273,6 +289,12 @@
 
       <div id="candidates-left"></div>
       <div id="result"></div>
+
+      <div id="graph-section" style="display:none;">
+        <h2>Guessed Entity's Knowledge Graph</h2>
+        <div id="mynetwork"></div>
+      </div>
+
     </div>
   </div>
 
@@ -286,6 +308,7 @@
     const result = document.getElementById("result");
     const candidatesLeft = document.getElementById("candidates-left");
     const questionNumberTag = document.getElementById("question-number-tag");
+    const graphSection = document.getElementById("graph-section"); // NEW: Get graph section
 
     let currentQuestion = null;
     let questionCount = 0;
@@ -299,6 +322,7 @@
       questionContainer.style.display = "block";
       buttons.style.display = "flex";
       startBtn.style.display = "none";
+      graphSection.style.display = "none"; // NEW: Hide graph section at game start
       loadQuestion();
     }
 
@@ -314,6 +338,7 @@
         candidatesLeft.textContent = "";
         startBtn.style.display = "block";
         startBtn.textContent = "Play Again";
+        graphSection.style.display = "none"; // Ensure graph is hidden if returning to guess from /question
         return;
       }
 
@@ -325,6 +350,7 @@
         candidatesLeft.textContent = "";
         startBtn.style.display = "block";
         startBtn.textContent = "Play Again";
+        graphSection.style.display = "none"; // Ensure graph is hidden if returning from /question
         return;
       }
 
@@ -335,7 +361,11 @@
 
       // Insert the question number tag text
       questionNumberTag.textContent = `Q${questionCount}`;
-      questionContainer.appendChild(questionNumberTag);
+      // Ensure the tag is actually inside the container if it's moved by textContent assignment
+      if (!questionContainer.contains(questionNumberTag)) {
+          questionContainer.prepend(questionNumberTag); // Use prepend to place it at the beginning
+      }
+
 
       // Show reference link if available
       referenceContainer.innerHTML = "";
@@ -345,6 +375,7 @@
 
       candidatesLeft.textContent = `Candidates left: ${data.candidates_remaining}`;
       result.textContent = "";
+      graphSection.style.display = "none"; // NEW: Hide graph section during active questioning
     }
 
     async function answerQuestion(answer) {
@@ -374,8 +405,16 @@
         referenceContainer.innerHTML = "";
         if (data.guess) {
           result.textContent = `I guess your character is: ${data.guess}`;
+          // NEW: If graph data is present, render it
+          if (data.graph_nodes && data.graph_nodes.length > 0) {
+            renderGraph(data.graph_nodes, data.graph_edges);
+            graphSection.style.display = "block"; // Show the graph section
+          } else {
+            graphSection.style.display = "none"; // Hide if no graph data
+          }
         } else {
           result.textContent = "I couldn't guess your character.";
+          graphSection.style.display = "none"; // Hide graph if no guess
         }
         candidatesLeft.textContent = "";
         startBtn.style.display = "block";
@@ -386,9 +425,93 @@
       }
     }
 
+    // NEW: Function to render the Vis.js graph
+    function renderGraph(rawNodes, rawEdges) {
+        var nodes = new vis.DataSet(rawNodes.map(node => ({
+            id: node.id,
+            label: node.properties.name || node.properties.value || 'Unknown', // Use 'name' or 'value' for label
+            title: JSON.stringify(node.properties, null, 2), // Tooltip with all properties
+            // Customize colors based on node labels if needed
+            color: node.labels.includes('Character') ? '#FFC107' : // Gold for Characters
+                   node.labels.includes('Trait') ? '#2196F3' : // Blue for Traits
+                   '#9E9E9E' // Grey for others
+        })));
+
+        var edges = new vis.DataSet(rawEdges.map(edge => ({
+            from: edge.start,
+            to: edge.end,
+            label: edge.type.replace(/_/g, ' '), // Relationship type as label on edge, make readable
+            title: JSON.stringify(edge.properties, null, 2), // Tooltip with all edge properties
+            arrows: 'to', // Directional arrows
+            font: { align: 'middle' }
+        })));
+
+        var container = document.getElementById('mynetwork');
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {
+            nodes: {
+                shape: 'dot',
+                size: 20,
+                font: {
+                    size: 14,
+                    color: '#333',
+                    face: 'Segoe UI'
+                },
+                borderWidth: 2,
+                shadow: true
+            },
+            edges: {
+                width: 1,
+                shadow: true,
+                font: {
+                    size: 10,
+                    align: 'middle',
+                    color: '#555'
+                },
+                color: {
+                    color: '#999',
+                    highlight: '#3a69d8',
+                    hover: '#3a69d8'
+                },
+                smooth: {
+                    enabled: true,
+                    type: "dynamic"
+                }
+            },
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    centralGravity: 0.3,
+                    springLength: 120,
+                    springConstant: 0.05,
+                    damping: 0.09,
+                    avoidOverlap: 0.7
+                },
+                solver: 'barnesHut'
+            },
+            interaction: {
+                hover: true,
+                tooltipDelay: 300,
+                navigationButtons: true, // Optional: add navigation buttons
+                keyboard: true
+            },
+            manipulation: {
+                enabled: false // Disable editing features for this visualization
+            }
+        };
+
+        var network = new vis.Network(container, data, options);
+    }
+
+
     startBtn.addEventListener("click", startGame);
     yesBtn.addEventListener("click", () => answerQuestion("yes"));
     noBtn.addEventListener("click", () => answerQuestion("no"));
   </script>
 </body>
 </html>
+```
