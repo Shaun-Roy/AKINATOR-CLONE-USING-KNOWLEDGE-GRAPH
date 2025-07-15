@@ -35,8 +35,8 @@ Add screenshots of your Akinator clone here to give users a visual understanding
 
 | Game Start Screen | Question & Answer Interface | Final Guess Screen |
 | :----------------- | :-------------------------- | :----------------- |
-| ![Start Screen](path/to/your/start_screen.png) | ![Question Screen](path/to/your/question_screen.png) | ![Guess Screen](path/to/your/guess_screen.png) |
-| *The initial welcome screen.* | *A typical question from the AI.* | *The AI's final guess.* |
+| ![Start Screen](start_screen_ss.png) | ![Question Screen](sample_question_ss.png) | ![Guess Screen](guess_screen.png) |
+| *The initial welcome screen.* | *A typical question from the system.* | *The system's final guess.* |
 
 ---
 ## Getting Started
