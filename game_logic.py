@@ -49,6 +49,60 @@ class Neo4jUtils:
             result = session.run(query, candidates=candidates, value=value)
             return [record["name"] for record in result]
 
+    # --- NEW FUNCTION FOR GRAPH VISUALIZATION ---
+    def get_node_and_relations(self, entity_name):
+        """
+        Retrieves a specific node and its immediate relationships/connected nodes
+        from Neo4j, formatted for frontend visualization.
+        """
+        with self.driver.session() as session:
+            # Query to get the central node, its direct relationships, and connected nodes
+            query = """
+            MATCH (n {name: $entityName})-[r]-(m)
+            RETURN n, r, m
+            LIMIT 50 // Limit the number of relations for better visualization performance
+            """
+            result = session.run(query, entityName=entity_name)
+
+            nodes_data = []
+            relationships_data = []
+            seen_node_ids = set() # To track unique nodes already added
+
+            for record in result:
+                n_node = record["n"]
+                m_node = record["m"]
+                relationship = record["r"]
+
+                # Add 'n' node if not already added
+                if n_node.id not in seen_node_ids:
+                    nodes_data.append({
+                        "id": n_node.id,
+                        "labels": list(n_node.labels),
+                        "properties": dict(n_node)
+                    })
+                    seen_node_ids.add(n_node.id)
+
+                # Add 'm' node if not already added
+                if m_node.id not in seen_node_ids:
+                    nodes_data.append({
+                        "id": m_node.id,
+                        "labels": list(m_node.labels),
+                        "properties": dict(m_node)
+                    })
+                    seen_node_ids.add(m_node.id)
+
+                # Add relationship
+                relationships_data.append({
+                    "id": relationship.id,
+                    "start": relationship.start_node.id,
+                    "end": relationship.end_node.id,
+                    "type": relationship.type,
+                    "properties": dict(relationship)
+                })
+
+            return {"nodes": nodes_data, "relationships": relationships_data}
+
+# --- AkinatorGame Class (No changes needed in this file for AkinatorGame logic directly) ---
 class AkinatorGame:
     TRAIT_REFERENCES = {
         "HAS_INTELLIGENCE": "akabab.github.io/superhero-api/api/glossary.html",
@@ -125,4 +179,16 @@ if __name__ == "__main__":
     trait = game.choose_best_trait()
     print("Best trait to ask about:", trait)
     # Simulate user answers here, etc.
+
+    # Example of getting graph data for a guess
+    test_entity = "Superman" # Replace with an actual character in your DB
+    print(f"\nGetting graph data for {test_entity}:")
+    try:
+        graph_data = game.neo4j.get_node_and_relations(test_entity)
+        print(f"Nodes found: {len(graph_data['nodes'])}")
+        print(f"Relationships found: {len(graph_data['relationships'])}")
+        # print(graph_data) # Uncomment to see full raw data
+    except Exception as e:
+        print(f"Error getting graph data: {e}")
+
     game.close()
